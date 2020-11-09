@@ -1,0 +1,6 @@
+data02
+output.pdf
+.ipynb_checkpoints
+*.ovf
+*.vmdk
+*__pychache__
