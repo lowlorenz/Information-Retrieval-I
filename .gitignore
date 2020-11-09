@@ -4,3 +4,5 @@ output.pdf
 *.ovf
 *.vmdk
 *__pychache__
+*.npy
+*.pyc

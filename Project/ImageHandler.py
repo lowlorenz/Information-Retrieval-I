@@ -1,4 +1,5 @@
 from matplotlib import pyplot as plt
+from skimage.color import rgb2gray
 import numpy as np
 import json
 import h5py 
@@ -10,6 +11,9 @@ class ImageHandler:
 
         self.query_images = read_images(path, 'query.json')
         self.map_images = read_images(path, 'map.json')
+        
+        self.query_images_gray = read_images(path, 'query.json', gray=True)
+        self.map_images_gray = read_images(path, 'map.json', gray=True)
 
         with h5py.File(path + 'gt.h5','r') as f:
             self.similar = f['sim'][:].astype(np.uint8)
@@ -18,9 +22,14 @@ class ImageHandler:
         return self.similar[query_index, map_index]
 
 
-def read_images(path, file):
+def read_images(path, file, gray=False):
     with open(path + file,'r') as file:
         map_info = json.load(file)
+        if gray:
+            return [
+                rgb2gray(plt.imread(path + image_name))
+                for image_name in map_info['im_paths']
+                ]
         return [
             plt.imread(path + image_name) 
             for image_name in map_info['im_paths']
