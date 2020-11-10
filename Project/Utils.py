@@ -61,7 +61,13 @@ def cluster_k_means(descriptors):
     centroids = clusters.cluster_centers_
     return clusters, centroids
 
-def bag_of_words(centroids, img_descriptors):  
+def euclidian(descriptor, centroid):
+    return np.sqrt(np.sum(np.square(descriptor-centroid)))
+
+def manhatten(descriptor, centroid):
+    return np.sum(np.abs(descriptor-centroid))
+
+def bag_of_words(centroids, img_descriptors, distance=euclidian):
     '''
     returns the bag of words of the image with respect to the centroids
     '''
@@ -74,12 +80,12 @@ def bag_of_words(centroids, img_descriptors):
     bow_vector = np.zeros(n_centroids)  
     
     for n in range(n_descriptors):
-        similarities = [np.sum(np.square(img_descriptors[n]-centroid)) for centroid in centroids]
+        similarities = [ distance(img_descriptors[n],centroid) for centroid in centroids]
         best = np.argmin(similarities)
         bow_vector[best] += 1
     return bow_vector
 
-def bag_of_words_matrix(centroids, images, func=bag_of_words):
+def bag_of_words_matrix(centroids, images, distance=euclidian):
     bow_images = None
     # loop over the images in the map set
     for i,img in enumerate(images):
@@ -90,7 +96,7 @@ def bag_of_words_matrix(centroids, images, func=bag_of_words):
         img_descriptors = orb.descriptors  # descriptors (the feature vectors)
         
         # compute BoW representation of the image (using the basic 'words', i.e. centroinds, computed earlier)
-        bow = bag_of_words(centroids, img_descriptors)
+        bow = bag_of_words(centroids, img_descriptors, distance=distance)
         # add the computed BoW vector to the set of map representations
         if bow_images is None:
             bow_images = bow
@@ -98,4 +104,19 @@ def bag_of_words_matrix(centroids, images, func=bag_of_words):
             bow_images = np.vstack( (bow_images, bow))
     return bow_images
 
-bag_of_words_matrix_c = make_cached(bag_of_words_matrix, 'bow.npy')
+bag_of_words_matrix_c_euclidian = make_cached(bag_of_words_matrix, 'bow_euc.npy')
+bag_of_words_matrix_c_manhatten = make_cached(bag_of_words_matrix, 'bow_man.npy')
+
+# receives as input the:
+#   - bag of words vectors of the map images
+#   - the bag of work vector of the query image
+def retrieve_images(map_bow_vectors, query_bow, distance):
+    n_map_bow_vectors = map_bow_vectors.shape[0]
+    most_similar = None  # use this to
+    distances = np.array([ 
+        distance(query_bow, map_bow_vectors[n]) 
+        for n in range(n_map_bow_vectors) 
+        ])
+    most_similar = np.argsort(distances)
+    distances = np.sort(distances)
+    return most_similar, distances
