@@ -5,6 +5,12 @@ from skimage.feature import ORB
 handler = ImageHandler()
 #plot([handler.query_images_gray[0]], cols=1)
 
-descriptors = extract_ORB(handler)
+map_descriptors = extract_map_ORB(handler)
 
-print(descriptors.shape)
+clusters, centroids = cluster_k_means(map_descriptors)
+
+query_descriptors = extract_query_ORB(handler)
+
+print('calculate bow\'s')
+bow = bag_of_words_matrix(centroids, query_descriptors)
+print(bow.shape)

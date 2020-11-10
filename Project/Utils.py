@@ -5,35 +5,38 @@ from sklearn.cluster import KMeans
 from skimage.feature import ORB
 import os
 
+orb = ORB(n_keypoints=200)
 
-def extract_ORB(handler):
-
-    descriptors = None
-
-    # if descriptors are saved access them
-    if os.path.isfile('orb.npy'):
-        with open('orb.npy', 'rb') as f:
-            descriptors = np.load(f)
-            return descriptors
-
-    # otherwise extract them and safe them in a npy file
-    orb = ORB(n_keypoints=200)
-
-    for img in handler.map_images_gray:
-        # extract ORB 
-        orb.detect_and_extract(img) 
-        if descriptors is None:
-            descriptors = orb.descriptors 
-        else:
-            descriptors = np.vstack((descriptors, orb.descriptors))
-    
-    with open('orb.npy', 'wb') as f:
-        np.save(f, descriptors)
-    
-    return descriptors
-
+def make_cached(func, filename):
+    def inner(*args, **kwargs):        
+        if os.path.isfile(filename):
+            with open(filename, 'rb') as f:
+                return np.load(f)
         
+        result = func(*args, **kwargs)
+        with open(filename, 'wb') as f:
+            np.save(f, result)
 
+        return result
+        
+    return inner
+
+def extract_ORB(img):
+    orb.detect_and_extract(img)
+    return orb.descriptors 
+
+def extract_map_ORB(handler):
+    # otherwise extract them and safe them in a npy fil
+    return np.vstack( 
+        (extract_ORB(img) for img in handler.map_images_gray) 
+        )
+    
+extract_map_ORB = make_cached(extract_map_ORB, 'map_orb.npy')
+
+def extract_query_ORB(handler):
+    return np.vstack( (extract_ORB(img) for img in handler.query_images_gray) )
+    
+extract_query_ORB = make_cached(extract_query_ORB, 'query_orb.npy')
 
 def cluster_k_means(descriptors):
     # clustering
@@ -43,7 +46,7 @@ def cluster_k_means(descriptors):
     centroids = clusters.cluster_centers_
     return clusters, centroids
 
-def bag_of_words(centroids, img_descriptors):
+def bag_of_words(centroids, img_descriptors):  
     '''
     returns the bag of words of the image with respect to the centroids
     '''
@@ -56,7 +59,12 @@ def bag_of_words(centroids, img_descriptors):
     bow_vector = np.zeros(n_centroids)  
     
     for n in range(n_descriptors):
-        similarities = [np.sum(np.square(img_descriptors[n]-centroid)) for centroid in centroids]
+        similarities = [np.sqrt(np.sum(np.square(img_descriptors[n]-centroid))) for centroid in centroids]
         best = np.argmin(similarities)
         bow_vector[best] += 1
     return bow_vector
+
+def bag_of_words_matrix(centroids, descriptors ,func=bag_of_words):
+    return np.vstack ( (func(centroids, img_des) for img_des in descriptors) )
+
+bag_of_words_matrix = make_cached(bag_of_words_matrix, 'bow.npy')
