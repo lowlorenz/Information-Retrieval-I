@@ -18,3 +18,5 @@ for index in range(len(handler.query_images_gray)):
     query_orb = extract_ORB(handler.query_images_gray[0])
     query_bow = bag_of_words(centroids, query_orb)
     most_similar, distances = retrieve_images(map_bow_euc, query_bow, euclidian)
+    
+
