@@ -26,17 +26,32 @@ def extract_ORB(img):
     return orb.descriptors 
 
 def extract_map_ORB(handler):
-    # otherwise extract them and safe them in a npy fil
-    return np.vstack( 
-        (extract_ORB(img) for img in handler.map_images_gray) 
-        )
+    descriptors = None
+    for img in handler.map_images_gray:
+        orb.detect_and_extract(img)  
+        descriptors_img = orb.descriptors  # descriptors (the feature vectors)
+        # Accumulate the computed descriptors
+        if descriptors is None:
+            descriptors = descriptors_img
+        else:
+            descriptors = np.vstack( (descriptors, descriptors_img))
+    return descriptors
     
-extract_map_ORB = make_cached(extract_map_ORB, 'map_orb.npy')
+extract_map_ORB_c = make_cached(extract_map_ORB, 'map_orb.npy')
 
 def extract_query_ORB(handler):
-    return np.vstack( (extract_ORB(img) for img in handler.query_images_gray) )
+    descriptors = None
+    for img in handler.query_images_gray:
+        orb.detect_and_extract(img)  
+        descriptors_img = orb.descriptors  # descriptors (the feature vectors)
+        # Accumulate the computed descriptors
+        if descriptors is None:
+            descriptors = descriptors_img
+        else:
+            descriptors = np.vstack( (descriptors, descriptors_img))
+    return descriptors
     
-extract_query_ORB = make_cached(extract_query_ORB, 'query_orb.npy')
+extract_query_ORB_c = make_cached(extract_query_ORB, 'query_orb.npy')
 
 def cluster_k_means(descriptors):
     # clustering
@@ -59,12 +74,28 @@ def bag_of_words(centroids, img_descriptors):
     bow_vector = np.zeros(n_centroids)  
     
     for n in range(n_descriptors):
-        similarities = [np.sqrt(np.sum(np.square(img_descriptors[n]-centroid))) for centroid in centroids]
+        similarities = [np.sum(np.square(img_descriptors[n]-centroid)) for centroid in centroids]
         best = np.argmin(similarities)
         bow_vector[best] += 1
     return bow_vector
 
-def bag_of_words_matrix(centroids, descriptors ,func=bag_of_words):
-    return np.vstack ( (func(centroids, img_des) for img_des in descriptors) )
+def bag_of_words_matrix(centroids, images, func=bag_of_words):
+    bow_images = None
+    # loop over the images in the map set
+    for i,img in enumerate(images):
 
-bag_of_words_matrix = make_cached(bag_of_words_matrix, 'bow.npy')
+        print(f'{i}/{len(images)}')
+        # extract the keypoints and corresponding descriptors (200 ORB descriptors)
+        orb.detect_and_extract(img)
+        img_descriptors = orb.descriptors  # descriptors (the feature vectors)
+        
+        # compute BoW representation of the image (using the basic 'words', i.e. centroinds, computed earlier)
+        bow = bag_of_words(centroids, img_descriptors)
+        # add the computed BoW vector to the set of map representations
+        if bow_images is None:
+            bow_images = bow
+        else:
+            bow_images = np.vstack( (bow_images, bow))
+    return bow_images
+
+bag_of_words_matrix_c = make_cached(bag_of_words_matrix, 'bow.npy')
