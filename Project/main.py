@@ -38,7 +38,7 @@ for k in euclidian_run.keys():
     euclidian_run[k] = list(itertools.chain(*euclidian_run[k]))
 
 df = pd.DataFrame (euclidian_run, columns = euclidian_run.keys())
-# # df.to_excel()
+# df.to_excel()
 
 
 ########## SIFT & Kmeans  ##############################################################
@@ -79,7 +79,7 @@ for k in sift_run.keys():
     sift_run[k] = list(itertools.chain(*sift_run[k]))
 
 df = pd.DataFrame (sift_run, columns = sift_run.keys())
-df.to_excel("run1_sift.xlsx")
+df.to_excel("runs/run1_sift.xlsx")
 
 ########## SIFT & GMM  ##############################################################
 # The initial sift data from the section above will be re-used here.
@@ -113,4 +113,4 @@ for k in gmm_run.keys():
     gmm_run[k] = list(itertools.chain(*gmm_run[k]))
 
 df = pd.DataFrame(gmm_run, columns = gmm_run.keys())
-df.to_excel("run1_gmm.xlsx")
+df.to_excel("runs/run1_gmm.xlsx")
