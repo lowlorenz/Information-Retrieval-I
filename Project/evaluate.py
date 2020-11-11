@@ -3,7 +3,7 @@ from scipy.stats import binom_test
 from evaluation_metrics import precision_at_10, mean_average_precision, sign_test_values
 from matplotlib import pyplot as plt
 
-df_orb = pd.read_excel('runs/Run1.xlsx')
+df_orb = pd.read_excel('runs/run1_orb.xlsx')
 df_sift = pd.read_excel('runs/run1_sift.xlsx')
 df_gmm = pd.read_excel('runs/run1_gmm.xlsx')
 

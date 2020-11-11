@@ -38,7 +38,7 @@ for k in euclidian_run.keys():
     euclidian_run[k] = list(itertools.chain(*euclidian_run[k]))
 
 df = pd.DataFrame (euclidian_run, columns = euclidian_run.keys())
-# df.to_excel()
+df.to_excel("runs/run1_orb.xlsx")
 
 
 ########## SIFT & Kmeans  ##############################################################
