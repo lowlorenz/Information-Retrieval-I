@@ -5,6 +5,7 @@ from sklearn.cluster import KMeans
 from skimage.feature import ORB
 from sklearn.mixture import GaussianMixture
 import cv2
+from scipy.stats import multivariate_normal
 import os
 
 orb = ORB(n_keypoints=200)
@@ -147,6 +148,43 @@ def bag_of_words_sift_all(centroids, descriptors, n_images, n_features):
     return np.vstack(bow)
 
 bag_of_words_sift_all_c = make_cached(bag_of_words_sift_all, 'bow_sift.npy')
+
+def bag_of_words_gmm_unnormalised(gmm, img_descriptors):  
+    '''
+    returns the bag of words of the image with respect to the fitted GMM components
+    '''
+    n_components = gmm.n_components  # number of centroids found with the KMeans clustering
+    
+    # initialization of the bag of words (BoW) vector with length equal to the number of clusters
+    bow_vector = np.zeros(n_components)  
+    
+    # Obtain the Gaussian distributions for each cluster/component. We'll use to find the likelihood.
+    gaussians = [ multivariate_normal(gmm.means_[i], gmm.covariances_[i], allow_singular=True) 
+                     for i in range(gmm.n_components)]
+    log_prior = np.log(gmm.weights_)
+    
+    for desc in img_descriptors:
+        log_probs = [C.logpdf(desc) + log_prior[i] for i,C in enumerate(gaussians)]
+        unnormalised_posteriors = np.exp(log_probs)
+        
+        bow_vector = bow_vector + unnormalised_posteriors
+
+    return bow_vector
+
+def bag_of_words_gmm_unnormalised_all(gmm, descriptors, n_images, n_features):  
+    '''
+    returns the bag of words of the image with respect to the fitted GMM components
+    '''
+    bow = []
+    for i in range(0, n_images*n_features, n_features):
+        print(i)
+        img_descriptors = descriptors[i:i+n_features]
+        bow.append(bag_of_words_gmm_unnormalised(gmm, img_descriptors))
+
+    return np.vstack(bow)
+
+bag_of_words_gmm_unnormalised_all_c = make_cached(bag_of_words_gmm_unnormalised_all, 'bow_gmm_un.npy')
+
 
 def bag_of_words_matrix(centroids, images, distance=euclidian):
     bow_images = None
