@@ -1,7 +1,7 @@
 import pandas as pd
 from scipy.stats import binom_test
-from evaluation_metrics import precision_at_10, mean_average_precision, sign_test_values 
-
+from evaluation_metrics import precision_at_10, mean_average_precision, sign_test_values
+from matplotlib import pyplot as plt
 
 df_orb = pd.read_excel('runs/Run1.xlsx')
 df_sift = pd.read_excel('runs/run1_sift.xlsx')
@@ -77,4 +77,16 @@ print("Binomial Test ORB-Kmeans vs. SIFT-Kmeans: p =", round(binom_test(st_orb_s
 print("Binomial Test SIFT-Kmeans vs. SIFT-GMM : p =", round(binom_test(st_kmeans_gmm),3)) 
 
 
+# Compare histograms of the precision_at_10 for each system.
+fig, axes = plt.subplots(3, 1, sharex = True, sharey = True)
+axes[0].hist(list(precision_at_10_orb.values()), bins=20, range=(0,1))
+axes[1].hist(list(precision_at_10_sift.values()), bins=20, range=(0,1))
+axes[2].hist(list(precision_at_10_gmm.values()), bins=20, range=(0,1))
 
+axes[0].title.set_text('ORB-Kmeans')
+axes[1].title.set_text('SIFT-Kmeans')
+axes[2].title.set_text('SIFT-GMM')
+axes[1].set_ylabel('Number of Queries')
+axes[2].set_xlabel('Precision_at_10')
+plt.tight_layout()
+plt.savefig('Precision_at_10_hist.png')

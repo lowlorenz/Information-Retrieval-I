@@ -62,3 +62,4 @@ def sign_test_values(measure, all_relevant, all_retrieved_1, all_retrieved_2):
             worse += 1
     
     return(better, worse)
+
