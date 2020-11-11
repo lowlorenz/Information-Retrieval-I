@@ -22,22 +22,22 @@ euclidian_run = {
     'distance'  : []
 }
 
-# N = len(handler.query_images_gray)
-# for index in range(N):
-#     print(f'logging: {index}/{N}')
-#     query_orb = extract_ORB(handler.query_images_gray[index])
-#     query_bow = bag_of_words(centroids, query_orb)
-#     most_similar, distances = retrieve_images(map_bow_euc, query_bow, euclidian)
-#     euclidian_run['query_index'].append([index] *  N)
-#     euclidian_run['map_index'].append(most_similar)
-#     euclidian_run['similar'].append([handler.similarity(index, map_index) for map_index in most_similar])
-#     euclidian_run['distance'].append(distances)
+N = len(handler.query_images_gray)
+for index in range(N):
+    print(f'logging: {index}/{N}')
+    query_orb = extract_ORB(handler.query_images_gray[index])
+    query_bow = bag_of_words(centroids, query_orb)
+    most_similar, distances = retrieve_images(map_bow_euc, query_bow, euclidian)
+    euclidian_run['query_index'].append([index] *  N)
+    euclidian_run['map_index'].append(most_similar)
+    euclidian_run['similar'].append([handler.similarity(index, map_index) for map_index in most_similar])
+    euclidian_run['distance'].append(distances)
 
 
-# for k in euclidian_run.keys():
-#     euclidian_run[k] = list(itertools.chain(*euclidian_run[k]))
+for k in euclidian_run.keys():
+    euclidian_run[k] = list(itertools.chain(*euclidian_run[k]))
 
-# df = pd.DataFrame (euclidian_run, columns = euclidian_run.keys())
+df = pd.DataFrame (euclidian_run, columns = euclidian_run.keys())
 # # df.to_excel()
 
 
