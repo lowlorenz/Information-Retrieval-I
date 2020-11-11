@@ -18,6 +18,10 @@ def precision(relevant, retrieved):
 def precision_at_k(relevant, retrieved, k):
     return precision(relevant, retrieved[:k])
 
+def precision_at_10(relevant, retrieved): 
+    return precision_at_k(relevant, retrieved, 10)
+
+
 def average_precision(relevant, retrieved):
     # Initialise list of precisions with a zero for each relevant document.
     P = [0] * len(relevant)
@@ -35,21 +39,18 @@ def average_precision(relevant, retrieved):
     return sum(P)/len(P)
 
 def mean_average_precision(all_relevant, all_retrieved):  
+    # all_relevant & all_retrieved should be dicts with the structure   all_relevant = {query_ind: [relevant_results...]}
     count = len(all_retrieved)
         
     precision_per_query = [average_precision(all_relevant[query], all_retrieved[query])  for query in all_retrieved]
     total = sum(precision_per_query)
     
-    return "mean AP: ", total / count
+    return total / count
 
-def sign_test_values(measure, qrels_file, run_file_1, run_file_2):
-    all_relevant = read_qrels_file(qrels_file)
-    all_retrieved_1 = read_run_file(run_file_1)
-    all_retrieved_2 = read_run_file(run_file_2)
+def sign_test_values(measure, all_relevant, all_retrieved_1, all_retrieved_2):
     better = 0
     worse  = 0
-    # BEGIN ANSWER
-    
+   
     for query in all_retrieved_1:
         performance_1 = measure(all_relevant[query], all_retrieved_1[query])
         performance_2 = measure(all_relevant[query], all_retrieved_2[query])
@@ -60,5 +61,4 @@ def sign_test_values(measure, qrels_file, run_file_1, run_file_2):
         elif performance_2 < performance_1:
             worse += 1
     
-    # END ANSWER
     return(better, worse)

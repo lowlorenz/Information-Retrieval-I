@@ -1,14 +1,18 @@
 import pandas as pd
-from evaluation_metrics import precision_at_k, mean_average_precision, sign_test_values
+from scipy.stats import binom_test
+from evaluation_metrics import precision_at_10, mean_average_precision, sign_test_values 
 
 
-df = pd.read_excel('runs/Run1.xlsx')
+df_orb = pd.read_excel('runs/Run1.xlsx')
+df_sift = pd.read_excel('runs/run1_sift.xlsx')
+df_gmm = pd.read_excel('runs/run1_gmm.xlsx')
+
 threshold = 22
 
-TP = df[(df.distance < threshold) & (df.similar == 1)].shape[0]
-FP = df[(df.distance < threshold) & (df.similar == 0)].shape[0]
-FN = df[(df.distance >= threshold) & (df.similar == 1)].shape[0]
-TN = df[(df.distance >= threshold) & (df.similar == 0)].shape[0]
+TP = df_orb[(df_orb.distance < threshold) & (df_orb.similar == 1)].shape[0]
+FP = df_orb[(df_orb.distance < threshold) & (df_orb.similar == 0)].shape[0]
+FN = df_orb[(df_orb.distance >= threshold) & (df_orb.similar == 1)].shape[0]
+TN = df_orb[(df_orb.distance >= threshold) & (df_orb.similar == 0)].shape[0]
 
 print(f'Overall positives: {TP + FN}')
 print(f'Overall negatives: {TN + FP}')
@@ -18,21 +22,59 @@ print(f'{TP:<5} | {FN:<5}\n{FP:<5} | {TN:<5}')
 
 
 # Find queries with relevant images.
-queries_with_relevant = df.groupby('query_index').filter(lambda x: x['similar'].max() == 1)
+queries_with_relevant = df_orb.groupby('query_index').filter(lambda x: x['similar'].max() == 1)
 query_indices = set(queries_with_relevant['query_index'].tolist())
 
 all_relevant = {}
-all_retrieved = {}
-precision_at_10 = {}
+all_retrieved_orb = {}
+all_retrieved_sift = {}
+all_retrieved_gmm = {}
+
+precision_at_10_orb = {}
+precision_at_10_sift = {}
+precision_at_10_gmm = {}
 
 for ind in query_indices:
-    retrieved = df[df['query_index'] == ind].map_index.tolist()
-    relevant = df[(df['query_index'] == ind) & (df['similar'] == 1)].map_index.tolist()
+    relevant = df_orb[(df_orb['query_index'] == ind) & (df_orb['similar'] == 1)].map_index.tolist()
+    
+    retrieved_orb = df_orb[df_orb['query_index'] == ind].map_index.tolist()
+    retrieved_sift = df_sift[df_sift['query_index'] == ind].map_index.tolist()
+    retrieved_gmm = df_gmm[df_gmm['query_index'] == ind].map_index.tolist()
     
     all_relevant[ind] = relevant
-    all_retrieved[ind] = retrieved
     
-    precision_at_10[ind] = precision_at_k(relevant, retrieved, 10)
+    all_retrieved_orb[ind] = retrieved_orb
+    all_retrieved_sift[ind] = retrieved_sift
+    all_retrieved_gmm[ind] = retrieved_gmm
+    
+    precision_at_10_orb[ind] = precision_at_10(relevant, retrieved_orb)
+    precision_at_10_sift[ind] = precision_at_10(relevant, retrieved_sift)
+    precision_at_10_gmm[ind] = precision_at_10(relevant, retrieved_gmm)
 
-print(mean_average_precision(all_relevant, all_retrieved))
-print("Precision at 10:", precision_at_10)
+print("\nMAP ORB:", round(mean_average_precision(all_relevant, all_retrieved_orb), 4))
+print("MAP SIFT:", round(mean_average_precision(all_relevant, all_retrieved_sift), 4))
+print("MAP GMM:", round(mean_average_precision(all_relevant, all_retrieved_gmm), 4))
+
+mean_prec_at_10_orb = sum(precision_at_10_orb.values())/len(precision_at_10_orb)
+mean_prec_at_10_sift = sum(precision_at_10_sift.values())/len(precision_at_10_sift)
+mean_prec_at_10_gmm = sum(precision_at_10_gmm.values())/len(precision_at_10_gmm)
+
+print("Mean Precision at 10 ORB:", round(mean_prec_at_10_orb,4))
+print("Mean Precision at 10 SIFT:", round(mean_prec_at_10_sift,4))
+print("Mean Precision at 10 GMM:", round(mean_prec_at_10_gmm,4))
+
+# print(precision_at_10_orb)
+# print(precision_at_10_sift)
+# print(precision_at_10_gmm)
+
+# st is a tuple, the number of queries where GMM is better and the number where GMM is worse.
+st_orb_gmm = sign_test_values(precision_at_10, all_relevant, all_retrieved_orb, all_retrieved_gmm)
+st_orb_sift = sign_test_values(precision_at_10, all_relevant, all_retrieved_orb, all_retrieved_sift)
+st_kmeans_gmm = sign_test_values(precision_at_10, all_relevant, all_retrieved_sift, all_retrieved_gmm)
+
+print("Binomial Test ORB-Kmeans vs. SIFT-GMM: p =", round(binom_test(st_orb_gmm),3)) 
+print("Binomial Test ORB-Kmeans vs. SIFT-Kmeans: p =", round(binom_test(st_orb_sift),3)) 
+print("Binomial Test SIFT-Kmeans vs. SIFT-GMM : p =", round(binom_test(st_kmeans_gmm),3)) 
+
+
+
