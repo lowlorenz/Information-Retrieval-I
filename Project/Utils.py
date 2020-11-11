@@ -63,8 +63,12 @@ def extract_map_SIFT(handler, sift):
     # otherwise extract them and safe them in a npy fil
     return np.vstack( (extract_SIFT(img, sift) for img in handler.map_images_gray) )
 
+extract_map_SIFT_c = make_cached(extract_map_SIFT, 'map_sift.npy')
+
 def extract_query_SIFT(handler, sift):
     return np.vstack( (extract_SIFT(img, sift) for img in handler.query_images_gray) )
+
+extract_query_SIFT_c = make_cached(extract_query_SIFT, 'map_sift.npy')
 
 def cluster_k_means(descriptors, K):
     # clustering
@@ -128,6 +132,21 @@ def bag_of_words_gmm_all(gmm, descriptors, n_images, n_features):
         bow.append(bag_of_words_gmm(gmm, img_descriptors))
 
     return np.vstack(bow)
+
+bag_of_words_gmm_all_c = make_cached(bag_of_words_gmm_all, 'bow_gmm.npy')
+
+def bag_of_words_sift_all(centroids, descriptors, n_images, n_features):  
+    '''
+    returns the bag of words of the image with respect to the fitted GMM components
+    '''
+    bow = []
+    for i in range(0, n_images*n_features, n_features):
+        img_descriptors = descriptors[i:i+n_features]
+        bow.append(bag_of_words(centroids, img_descriptors))
+
+    return np.vstack(bow)
+
+bag_of_words_sift_all_c = make_cached(bag_of_words_sift_all, 'bow_sift.npy')
 
 def bag_of_words_matrix(centroids, images, distance=euclidian):
     bow_images = None
