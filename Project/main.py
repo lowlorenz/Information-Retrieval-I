@@ -6,6 +6,7 @@ import itertools
 import os
 import re
 
+print("ORB & Kmeans", "-"*30)
 handler = ImageHandler()
 
 map_descriptors = extract_map_ORB_c(handler)
@@ -52,6 +53,8 @@ df.to_excel("runs/run" + str(last_run+1) + "_orb.xlsx")
 
 ########## SIFT & Kmeans  ##############################################################
 
+print("SIFT & Kmeans", "-"*30)
+
 handler_cv = ImageHandler(method='opencv')
 
 sift = cv2.SIFT_create(nfeatures=200) # May return more than specified number of features if there are ties.
@@ -93,6 +96,8 @@ df.to_excel("runs/run" + str(last_run+1) + "_sift.xlsx")
 ########## SIFT & GMM  ##############################################################
 # The initial sift data from the section above will be re-used here.
 
+print("SIFT & GMM", "-"*30)
+
 n_components=100
 gmm = gaussian_mixture_model(map_descriptors_sift, n_components=n_components) # Fit the model to find the clusters/components.
 
@@ -107,7 +112,6 @@ gmm_run = {
 }
 
 N = len(handler_cv.query_images_gray)
-print("Retrieving using SIFT & GMM...")
 for index in range(N):
     print(f'logging: {index}/{N}')
     query_sift = extract_SIFT(handler_cv.query_images_gray[index], sift)
@@ -127,6 +131,7 @@ df.to_excel("runs/run" + str(last_run+1) + "_gmm.xlsx")
 ########## SIFT & GMM with unnormalised posterior probabilities ####################################################
 # Again the same SIFT features and Gaussian Mixture Model will be used here.
 
+print("SIFT & GMM Unnormalised", "-"*30)
 map_bow_gmm2 = bag_of_words_gmm_unnormalised_all_c(gmm, map_descriptors_sift, n_images, n_features_sift)
 
 gmm2_run = {
