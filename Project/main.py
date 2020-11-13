@@ -16,7 +16,7 @@ clusters, centroids = cluster_k_means(map_descriptors, 100)
 #query_descriptors = extract_query_ORB_c(handler)
 
 map_bow_euc = bag_of_words_matrix_c_euclidian(centroids, handler.map_images_gray, distance=euclidian)
-map_bow_man = bag_of_words_matrix_c_manhatten(centroids, handler.map_images_gray, distance=manhatten)
+# map_bow_man = bag_of_words_matrix_c_manhatten(centroids, handler.map_images_gray, distance=manhatten)
 
 euclidian_run = {
     'query_index': [],

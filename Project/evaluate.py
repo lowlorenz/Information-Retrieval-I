@@ -3,10 +3,10 @@ from scipy.stats import binom_test
 from evaluation_metrics import precision_at_10, mean_average_precision, sign_test_values
 from matplotlib import pyplot as plt
 
-df_orb = pd.read_excel('runs/run3_orb.xlsx')
-df_sift = pd.read_excel('runs/run3_sift.xlsx')
-df_gmm = pd.read_excel('runs/run3_gmm.xlsx')
-df_gmm_un = pd.read_excel('runs/run3_gmm_unnormalised.xlsx')
+df_orb = pd.read_excel('runs/run13_orb.xlsx')
+df_sift = pd.read_excel('runs/run13_sift.xlsx')
+df_gmm = pd.read_excel('runs/run13_gmm.xlsx')
+df_gmm_un = pd.read_excel('runs/run13_gmm_unnormalised.xlsx')
 
 threshold = 22
 

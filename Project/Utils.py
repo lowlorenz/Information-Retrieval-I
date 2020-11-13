@@ -69,7 +69,7 @@ extract_map_SIFT_c = make_cached(extract_map_SIFT, 'map_sift.npy')
 def extract_query_SIFT(handler, sift):
     return np.vstack( (extract_SIFT(img, sift) for img in handler.query_images_gray) )
 
-extract_query_SIFT_c = make_cached(extract_query_SIFT, 'map_sift.npy')
+extract_query_SIFT_c = make_cached(extract_query_SIFT, 'query_sift.npy')
 
 def cluster_k_means(descriptors, K):
     # clustering
@@ -86,7 +86,7 @@ def manhatten(descriptor, centroid):
 
 def gaussian_mixture_model(descriptors, n_components):
     # clustering
-    gmm = GaussianMixture(n_components=n_components, covariance_type='full')
+    gmm = GaussianMixture(n_components=n_components, covariance_type='full', random_state=20)
     gmm.fit(descriptors)
     return gmm
     
@@ -164,10 +164,13 @@ def bag_of_words_gmm_unnormalised(gmm, img_descriptors):
     log_prior = np.log(gmm.weights_)
     
     for desc in img_descriptors:
-        log_probs = [C.logpdf(desc) + log_prior[i] for i,C in enumerate(gaussians)]
-        unnormalised_posteriors = np.exp(log_probs)
+        # Get the likelihood times the prior for the given point (desc) for each Gaussian.
+        # Weight the log-likelihood values so that the numbers are not too small when we take the exponent.
+        log_probs = [ C.logpdf(desc) + log_prior[i] +10*np.log(10) for i,C in enumerate(gaussians)]
+        # Take the exponent of the log to get the original values. 
+        unnormalised_posteriors_scaled = np.exp(log_probs)
         
-        bow_vector = bow_vector + unnormalised_posteriors
+        bow_vector = bow_vector + unnormalised_posteriors_scaled
 
     return bow_vector
 
